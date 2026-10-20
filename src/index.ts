@@ -4,11 +4,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { AppDataSource } from "./database/data-source.js";
-import userRoutes from "./modules/user/user.routes.js";
+import adminRoutes from "./modules/admin/admin.routes.js";
 
 const app = express();
 app.use(express.json());
-app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 AppDataSource.initialize()
   .then(() => {

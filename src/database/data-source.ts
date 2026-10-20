@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { User } from "../../modules/user/user.entity.js";
+import { Admin } from "../modules/admin/admin.entity.js";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -10,5 +10,5 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   synchronize: true,
-  entities: [User],
+  entities: [Admin],
 });
