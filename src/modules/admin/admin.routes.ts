@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { AppDataSource } from "../../database/data-source.js";
+import { AppDataSource } from "../../config/data-source.js";
 import { Admin } from "../admin/admin.entity.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";

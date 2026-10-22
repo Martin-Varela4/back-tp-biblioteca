@@ -1,15 +1,15 @@
-import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { env } from "./env.js";
-import { Admin } from "../modules/admin/admin.entity.js";
 
 export const AppDataSource = new DataSource({
-  type: "mysql",
-  host: env.db.host,
-  port: env.db.port,
-  username: env.db.user,
-  password: env.db.password,
-  database: env.db.name,
-  synchronize: env.db.synchronize,
-  entities: [Admin],
+  type: "mysql", 
+  host: process.env.DB_HOST || "localhost",
+  port: Number(process.env.DB_PORT) || 3306,
+  username: process.env.DB_USER || "root",
+  password: process.env.DB_PASS || "",
+  database: process.env.DB_NAME || "biblioteca",
+  synchronize: true, 
+  logging: false,
+  entities: ["src/modules/**/*.entity.ts"], 
+  migrations: [],
+  subscribers: [],
 });

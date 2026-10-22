@@ -1,33 +1,51 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { env } from "../../config/env.js";
-import { findByEmail } from "../user/user.repository.js";
-import { toPublicUser } from "../user/user.dto.js";
+import { Admin } from "../admin/admin.entity.js";
+import { AppDataSource } from "../../config/data-source.js"; 
 
-export type LoginInput = { email: string; password: string };
-
-export const login = async ({ email, password }: LoginInput) => {
-  const user = await findByEmail(email);
-
-  // Mismo mensaje si el correo no existe o la contraseña es incorrecta
-  const passwordOk = user ? await bcrypt.compare(password, user.passwordHash) : false;
-  if (!user || !passwordOk) {
-    throw Object.assign(new Error("Correo o contraseña incorrectos"), { status: 401 });
-  }
-
-  const token = jwt.sign({ email: user.email }, env.jwt.secret, {
-    subject: String(user.id),
-    expiresIn: env.jwt.expiresIn as jwt.SignOptions["expiresIn"],
-  });
-
-  return { token, user: toPublicUser(user) };
+export type LoginInput = {
+  email?: string;
+  username?: string;
+  password: string;
 };
 
-// Devuelve el id del usuario si el token es válido; si no, lanza un error 401
+export const login = async ({ email, username, password }: LoginInput) => {
+  const adminRepository = AppDataSource.getRepository(Admin);
+
+  const admin = await adminRepository.findOne({
+    where: [
+      ...(email ? [{ email }] : []),
+      ...(username ? [{ username }] : []),
+    ],
+  });
+
+  const passwordOk = admin ? await bcrypt.compare(password, admin.passwordHash) : false;
+  
+  if (!admin || !passwordOk) {
+    throw Object.assign(new Error("Correo, usuario o contraseña incorrectos"), { status: 401 });
+  }
+
+  const jwtSecret = process.env.JWT_SECRET || "fallback_secret";
+
+  const token = jwt.sign(
+    { email: admin.email, username: admin.username }, 
+    jwtSecret, 
+    {
+      subject: String(admin.id),
+      expiresIn: "1d", 
+    }
+  );
+
+  const { passwordHash: _, ...adminWithoutPassword } = admin;
+
+  return { token, admin: adminWithoutPassword };
+};
+
 export const verifyToken = (token: string): number => {
   try {
-    const payload = jwt.verify(token, env.jwt.secret);
-    return Number(typeof payload === "object" ? payload.sub : NaN);
+    const jwtSecret = process.env.JWT_SECRET || "fallback_secret";
+    const payload = jwt.verify(token, jwtSecret);
+    return Number(typeof payload === "object" && payload !== null ? payload.sub : NaN);
   } catch {
     throw Object.assign(new Error("Token inválido o expirado"), { status: 401 });
   }

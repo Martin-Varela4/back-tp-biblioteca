@@ -16,6 +16,6 @@ export class Admin {
   passwordHash!: string;
 
   @CreateDateColumn({ type: "datetime" })
-  creadoEn!: Date;
+  createdAt!: Date;
 }
 
