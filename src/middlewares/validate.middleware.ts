@@ -4,31 +4,26 @@ import type { ZodType } from "zod";
 export const validateData = (schema: ZodType, target: "body" | "params" | "query" = "body") => {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
-      if (target === "body") {
-        const wrappedResult = schema.safeParse({ body: req.body });
-        if (wrappedResult.success) {
-          req.body = (wrappedResult.data as any).body;
-          return next();
-        }
+      const hasBodyShape =
+        target === "body" &&
+        "shape" in (schema as any) &&
+        Boolean((schema as any).shape?.body);
 
-        const directResult = schema.safeParse(req.body);
-        if (directResult.success) {
-          req.body = (directResult.data as any)?.body ?? directResult.data;
-          return next();
-        }
+      const dataToValidate = hasBodyShape ? { body: req.body } : req[target];
+      const parsed: any = schema.parse(dataToValidate);
 
-        const isWrappedSchema = !wrappedResult.error.issues.some(
-          (i) => i.path.length === 1 && i.path[0] === "body"
-        );
-
-        if (isWrappedSchema) {
-          throw wrappedResult.error;
-        }
-
-        throw directResult.error;
+      if (hasBodyShape) {
+        req.body = parsed.body;
+      } else if (target === "query") {
+        Object.defineProperty(req, "query", {
+          value: parsed,
+          writable: true,
+          configurable: true,
+        });
+      } else {
+        req[target] = parsed;
       }
 
-      (req as any)[target] = schema.parse((req as any)[target]);
       next();
     } catch (error) {
       next(error);
