@@ -1,37 +1,43 @@
-import { AppDataSource } from "../../config/data-source.js";
-import { Author } from "./author.entity.js";
-
-const authorRepository = AppDataSource.getRepository(Author);
+import { authorRepository } from "./author.repository.js";
+import { AppError } from "../../utils/app-error.js";
+import { CreateAuthorInput, UpdateAuthorInput } from "./author.schema.js";
 
 export const authorService = {
   async getAll() {
-    return await authorRepository.find();
+    return await authorRepository.findAll();
   },
 
   async getById(id: number) {
-    const author = await authorRepository.findOneBy({ id });
+    const author = await authorRepository.findById(id);
+
     if (!author) {
-      throw new Error("Autor no encontrado"); 
+      throw new AppError("Autor no encontrado", 404);
     }
+
     return author;
   },
 
-  async create(data: any) {
-    const newAuthor = authorRepository.create(data);
-    return await authorRepository.save(newAuthor);
+  async create(data: CreateAuthorInput) {
+    return await authorRepository.create(data);
   },
 
-  async update(id: number, data: any) {
-    const author = await this.getById(id); 
-    authorRepository.merge(author, data);
-    return await authorRepository.save(author);
+  async update(id: number, data: UpdateAuthorInput) {
+    const author = await authorRepository.update(id, data);
+
+    if (!author) {
+      throw new AppError("Autor no encontrado", 404);
+    }
+
+    return author;
   },
 
   async delete(id: number) {
     const result = await authorRepository.delete(id);
-    if (result.affected === 0) {
-      throw new Error("Autor no encontrado");
+
+    if (!result.affected) {
+      throw new AppError("Autor no encontrado", 404);
     }
+
     return { message: "Autor eliminado exitosamente" };
-  }
+  },
 };

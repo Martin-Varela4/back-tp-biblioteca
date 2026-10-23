@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Admin } from "../admin/admin.entity.js";
-import { AppDataSource } from "../../config/data-source.js"; 
+import { AppDataSource } from "../../config/data-source.js";
+import { AppError } from "../../utils/app-error.js";
 
 export type LoginInput = {
   email?: string;
@@ -20,19 +21,19 @@ export const login = async ({ email, username, password }: LoginInput) => {
   });
 
   const passwordOk = admin ? await bcrypt.compare(password, admin.passwordHash) : false;
-  
+
   if (!admin || !passwordOk) {
-    throw Object.assign(new Error("Correo, usuario o contraseña incorrectos"), { status: 401 });
+    throw new AppError("Correo, usuario o contraseña incorrectos", 401);
   }
 
   const jwtSecret = process.env.JWT_SECRET || "fallback_secret";
 
   const token = jwt.sign(
-    { email: admin.email, username: admin.username }, 
-    jwtSecret, 
+    { email: admin.email, username: admin.username },
+    jwtSecret,
     {
       subject: String(admin.id),
-      expiresIn: "1d", 
+      expiresIn: "1d",
     }
   );
 
@@ -47,6 +48,6 @@ export const verifyToken = (token: string): number => {
     const payload = jwt.verify(token, jwtSecret);
     return Number(typeof payload === "object" && payload !== null ? payload.sub : NaN);
   } catch {
-    throw Object.assign(new Error("Token inválido o expirado"), { status: 401 });
+    throw Object.assign(new AppError("Token inválido o expirado", 401), { status: 401 });
   }
 };

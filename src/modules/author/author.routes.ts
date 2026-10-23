@@ -1,15 +1,36 @@
 import { Router } from "express";
-import { getAllAuthors, getAuthorById, createAuthor, updateAuthor, deleteAuthor} from "../author/author.controller.js";
+import {
+  getAllAuthors,
+  getAuthorById,
+  createAuthor,
+  updateAuthor,
+  deleteAuthor,
+} from "./author.controller.js";
 import { validateData } from "../../middlewares/validate.middleware.js";
-import { createAuthorSchema, getAuthorParamsSchema, updateAuthorSchema} from "./author.schema.js";
+import {
+  createAuthorSchema,
+  updateAuthorSchema,
+  authorIdSchema,
+} from "./author.schema.js";
 import { requireAuth } from "../../middlewares/auth.middleware.js";
 
 const router = Router();
 
+router.use(requireAuth);
+
 router.get("/", getAllAuthors);
-router.get("/:id", validateData(getAuthorParamsSchema, "params"), getAuthorById);
-router.post("/", requireAuth, validateData(createAuthorSchema, "body"), createAuthor); 
-router.put("/:id", requireAuth, validateData(updateAuthorSchema, "body"), updateAuthor);
-router.delete("/:id", requireAuth, validateData(getAuthorParamsSchema, "params"), deleteAuthor); 
+
+router.get("/:id", validateData(authorIdSchema, "params"), getAuthorById);
+
+router.post("/", validateData(createAuthorSchema), createAuthor);
+
+router.put(
+  "/:id",
+  validateData(authorIdSchema, "params"),
+  validateData(updateAuthorSchema),
+  updateAuthor
+);
+
+router.delete("/:id", validateData(authorIdSchema, "params"), deleteAuthor);
 
 export const authorRoutes = router;

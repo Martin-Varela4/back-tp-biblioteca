@@ -1,29 +1,40 @@
+
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
-
+import { AppError } from "../utils/app-error.js";
 
 export const notFoundHandler = (_req: Request, res: Response) => {
-  res.status(404).json({ message: "Ruta no encontrada" });
+  return res.status(404).json({
+    message: "Ruta no encontrada",
+  });
 };
 
-
-export const errorHandler = (err: any, _req: Request, res: Response, _next: NextFunction) => {
+export const errorHandler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ZodError) {
     return res.status(400).json({
       message: "Datos inválidos",
-      errors: err.issues.map((issue) => ({
-        campo: issue.path.join("."),
-        mensaje: issue.message,
-      })),
+      errors: err.issues.map((issue) => {
+        const cleanPath = issue.path
+          .filter((p) => p !== "body" && p !== "params")
+          .join(".");
+
+        return {
+          campo: cleanPath || issue.path.join("."),
+          mensaje: issue.message,
+        };
+      }),
     });
   }
 
-  const status: number = err.status ?? 500;
-
-  if (status === 500) {
-    console.error(err);
-    return res.status(500).json({ message: "Error interno del servidor" });
+  if (err instanceof AppError) {
+    return res.status(err.status).json({
+      message: err.message,
+    });
   }
 
-  res.status(status).json({ message: err.message });
+  console.error(err);
+
+  return res.status(500).json({
+    message: "Error interno del servidor",
+  });
 };

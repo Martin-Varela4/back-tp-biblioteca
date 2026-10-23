@@ -1,14 +1,19 @@
-// import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Book } from "../book/book.entity.js";
 
-// @Entity("cartItem")
-// export class CartItem {
-//     @PrimaryGeneratedColumn()
-//     id!: number;
+@Entity("genre")
+export class Genre {
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-//     @Column({ type: "varchar" })
-//     producto!: string;
+  @Column({ type: "varchar", length: 100, unique: true })
+  name!: string; 
 
-//     @Column({ unique: true })
-//     cantidad!: number;
 
-// }
+  @OneToMany(() => Book, (book) => book.genre) 
+  books!: Book[];
+
+}
+
+
+    
