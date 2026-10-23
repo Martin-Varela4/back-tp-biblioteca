@@ -28,5 +28,20 @@ export const updateAuthorSchema = z.object({
   }),
 });
 
+
+export const getAuthorParamsSchema = z.object({
+  params: z.object({
+    id: z.string().pipe(z.coerce.number({ message: "El ID debe ser un número válido" })).refine(val => val > 0, {
+      message: "El ID debe ser un número positivo"
+    })
+  })
+});
+
+
+export const authorIdSchema = z.object({
+  id: z.string().pipe(z.coerce.number({ message: "El ID debe ser un número válido" }))
+});
+
 export type CreateAuthorInput = z.infer<typeof createAuthorSchema>['body'];
 export type UpdateAuthorInput = z.infer<typeof updateAuthorSchema>['body'];
+export type GetAuthorParams = z.infer<typeof getAuthorParamsSchema>['params'];

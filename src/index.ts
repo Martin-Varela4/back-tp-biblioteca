@@ -1,10 +1,12 @@
 import "reflect-metadata"; 
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import dotenv from "dotenv";
 import cors from 'cors';
 import adminRoutes from "./modules/admin/admin.routes.js";
 import { authRoutes } from "./modules/auth/auth.routes.js"; 
+import { authorRoutes } from "./modules/author/author.routes.js";
 import { AppDataSource } from "./config/data-source.js";   
+import { notFoundHandler, errorHandler } from "./middlewares/error.middleware.js";
 
 dotenv.config();
 
@@ -15,16 +17,11 @@ app.use(cors());
 
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/authors", authorRoutes);
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error("Error capturado:", err.message);
-    const status = err.status || 500;
-    res.status(status).json({
-        success: false,
-        message: err.message || "Error interno del servidor",
-    });
-});
+app.use(notFoundHandler);
 
+app.use(errorHandler);
 
 AppDataSource.initialize()
   .then(() => {
